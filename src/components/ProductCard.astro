@@ -1,0 +1,321 @@
+---
+import { translations } from '../i18n/translations';
+
+interface Props {
+  name: string;
+  price: number;
+  originalPrice?: number;
+  badge?: string;
+  image?: string;
+  slug: string;
+  lang: string;
+  gradient?: string;
+}
+
+const {
+  name,
+  price,
+  originalPrice,
+  badge,
+  image,
+  slug,
+  lang,
+  gradient = 'linear-gradient(135deg, #1a1a1a 0%, #2a2018 50%, #1a1a1a 100%)',
+} = Astro.props;
+
+const langKey = lang && lang in translations ? lang : 'fr';
+const t = (translations as Record<string, Record<string, string>>)[langKey] || {};
+
+const badgeClass = badge === t.product_new || badge === 'NEW' || badge === 'NUEVO' || badge === 'NOVO' ? 'badge-new'
+  : badge === t.product_sale || badge === 'PROMO' || badge === 'OFERTA' || badge === 'PROMOÇÃO' ? 'badge-sale'
+  : 'badge-best';
+
+const discountPct = originalPrice ? Math.round((1 - price / originalPrice) * 100) : 0;
+---
+
+<article class="product-card fade-up" data-slug={slug}>
+  <!-- Image area -->
+  <div class="card-image-wrap">
+    {image ? (
+      <img
+        src={image}
+        alt={name}
+        class="card-img"
+        loading="lazy"
+        width="400"
+        height="400"
+      />
+    ) : (
+      <div class="card-img-placeholder" style={`background: ${gradient};`}>
+        <svg width="48" height="48" fill="none" stroke="rgba(201,168,76,0.4)" stroke-width="1" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/>
+        </svg>
+        <span class="placeholder-label">{name}</span>
+      </div>
+    )}
+
+    <!-- Badge -->
+    {badge && (
+      <span class={`product-badge ${badgeClass}`}>{badge}</span>
+    )}
+
+    <!-- Hover overlay -->
+    <div class="card-hover-overlay">
+      <a href={`/${langKey}/product/${slug}/`} class="btn-view">
+        {t.product_view}
+      </a>
+    </div>
+  </div>
+
+  <!-- Card body -->
+  <div class="card-body">
+    <div class="card-name-row">
+      <h3 class="card-name">{name}</h3>
+    </div>
+
+    <div class="card-price-row">
+      <span class="card-price">{price.toFixed(2).replace('.', ',')} €</span>
+      {originalPrice && (
+        <span class="card-original-price">{originalPrice.toFixed(2).replace('.', ',')} €</span>
+      )}
+      {discountPct > 0 && (
+        <span class="card-discount">-{discountPct}%</span>
+      )}
+    </div>
+
+    <button
+      type="button"
+      class="card-add-btn liquid-btn primary"
+      data-slug={slug}
+      data-name={name}
+      data-price={price}
+      data-lang={langKey}
+      onclick={`addToCart('${slug}', '${name}', ${price}, '${name} ${t.toast_added || 'ajouté au panier'}')`}
+    >
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:8px;flex-shrink:0">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272"/>
+      </svg>
+      {t.product_add}
+    </button>
+  </div>
+
+  <!-- Shine sweep on hover -->
+  <div class="card-shine" aria-hidden="true"></div>
+</article>
+
+<style>
+  .product-card {
+    position: relative;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur) saturate(180%);
+    -webkit-backdrop-filter: var(--glass-blur) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    transition: transform 0.4s var(--transition-spring), border-color 0.4s, box-shadow 0.4s;
+    box-shadow:
+      inset 0 1px 1px var(--glass-shine),
+      0 8px 32px rgba(0, 0, 0, 0.4);
+  }
+
+  .product-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(var(--accent-rgb), 0.4);
+    box-shadow:
+      inset 0 1px 1px var(--glass-shine),
+      0 20px 60px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(var(--accent-rgb), 0.15);
+  }
+
+  /* Shine sweep */
+  .card-shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 40%,
+      rgba(255, 255, 255, 0.04) 50%,
+      transparent 60%
+    );
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    transform: translateX(-100%);
+  }
+
+  .product-card:hover .card-shine {
+    opacity: 1;
+    transform: translateX(100%);
+    transition: transform 0.7s ease, opacity 0.3s;
+  }
+
+  /* Image */
+  .card-image-wrap {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+  }
+
+  .card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .product-card:hover .card-img {
+    transform: scale(1.06);
+  }
+
+  .card-img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .placeholder-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.9rem;
+    color: rgba(201,168,76,0.5);
+    text-align: center;
+    padding: 0 1rem;
+  }
+
+  /* Badge */
+  .product-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-family: 'Outfit', sans-serif;
+    z-index: 2;
+  }
+
+  .badge-new {
+    background: rgba(var(--accent-rgb), 0.9);
+    color: #000;
+  }
+
+  .badge-sale {
+    background: rgba(239, 68, 68, 0.9);
+    color: #fff;
+  }
+
+  .badge-best {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    backdrop-filter: blur(8px);
+  }
+
+  /* Hover overlay */
+  .card-hover-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.4s;
+    z-index: 3;
+  }
+
+  .product-card:hover .card-hover-overlay {
+    opacity: 1;
+  }
+
+  .btn-view {
+    background: var(--glass-bg);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 999px;
+    color: #fff;
+    padding: 0.8rem 2rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: 'Outfit', sans-serif;
+    backdrop-filter: blur(12px);
+    transition: all 0.3s;
+    transform: translateY(10px);
+    transition: transform 0.4s var(--transition-spring), opacity 0.4s;
+    opacity: 0;
+  }
+
+  .product-card:hover .btn-view {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .btn-view:hover {
+    background: rgba(var(--accent-rgb), 0.2);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Card body */
+  .card-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .card-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .card-price-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .card-price {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .card-original-price {
+    font-size: 0.85rem;
+    color: var(--text3);
+    text-decoration: line-through;
+  }
+
+  .card-discount {
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #ef4444;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 0.05em;
+  }
+
+  .card-add-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.9rem 1.5rem;
+    font-size: 0.6rem;
+  }
+</style>

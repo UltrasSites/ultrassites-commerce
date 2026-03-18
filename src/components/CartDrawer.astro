@@ -1,0 +1,377 @@
+---
+import { translations } from '../i18n/translations';
+
+interface Props {
+  lang: string;
+}
+
+const { lang } = Astro.props;
+const langKey = lang && lang in translations ? lang : 'fr';
+const t = (translations as Record<string, Record<string, string>>)[langKey] || {};
+---
+
+<!-- Cart Overlay -->
+<div class="cart-overlay" id="cart-overlay"></div>
+
+<!-- Cart Drawer -->
+<aside class="cart-drawer" id="cart-drawer" aria-label={t.cart_title} role="dialog">
+  <!-- Header -->
+  <div class="cart-header">
+    <div class="cart-title-wrap">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" style="color:var(--accent)">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0z"/>
+      </svg>
+      <h2 class="cart-title">{t.cart_title}</h2>
+    </div>
+    <button type="button" id="cart-close-btn" class="cart-close" aria-label="Fermer">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Eyebrow separator -->
+  <div class="cart-separator"></div>
+
+  <!-- Cart items (populated by JS) -->
+  <div class="cart-body">
+    <!-- Empty state -->
+    <div class="cart-empty" id="cart-empty-state">
+      <div class="empty-icon">
+        <svg width="56" height="56" fill="none" stroke="rgba(201,168,76,0.3)" stroke-width="1" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0z"/>
+        </svg>
+      </div>
+      <p class="empty-title">{t.cart_empty}</p>
+      <p class="empty-sub">{t.cart_empty_sub}</p>
+      <button type="button" class="liquid-btn ghost" id="cart-continue-btn" style="margin-top:1.5rem">
+        {t.cart_continue}
+      </button>
+    </div>
+
+    <!-- Items list -->
+    <div class="cart-items" id="cart-items-list"></div>
+  </div>
+
+  <!-- Footer -->
+  <div class="cart-footer" id="cart-footer">
+    <div class="cart-total-row">
+      <span class="total-label">{t.cart_total}</span>
+      <span class="total-amount" id="cart-total-amount">0,00 €</span>
+    </div>
+    <a
+      href={`/${langKey}/#checkout`}
+      class="liquid-btn primary"
+      id="cart-checkout-btn"
+      style="width:100%;justify-content:center;padding:1.1rem;"
+      onclick="if(typeof showToast==='function') showToast('Redirection vers le checkout...')"
+    >
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:8px">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z"/>
+      </svg>
+      {t.cart_checkout}
+    </a>
+    <button type="button" class="liquid-btn ghost" id="cart-continue-btn-2" style="width:100%;justify-content:center;margin-top:0.5rem">
+      {t.cart_continue}
+    </button>
+    <p class="cart-secure-note">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:inline;margin-right:4px">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+      </svg>
+      Paiement 100% sécurisé · Demo uniquement
+    </p>
+  </div>
+</aside>
+
+<style>
+  /* ══════════ CART OVERLAY ══════════ */
+  .cart-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+
+  .cart-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* ══════════ CART DRAWER ══════════ */
+  .cart-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(420px, 100vw);
+    z-index: 1100;
+    background: rgba(8, 8, 8, 0.95);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border-left: 1px solid var(--glass-border);
+    box-shadow: -20px 0 80px rgba(0, 0, 0, 0.6), inset 1px 0 0 rgba(255,255,255,0.04);
+    transform: translateX(100%);
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .cart-drawer.open {
+    transform: translateX(0);
+  }
+
+  /* Header */
+  .cart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 1.75rem;
+  }
+
+  .cart-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .cart-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.15em;
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  .cart-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .cart-close:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .cart-separator {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--glass-border), rgba(var(--accent-rgb), 0.3), var(--glass-border), transparent);
+    margin: 0 1.75rem;
+  }
+
+  /* Body */
+  .cart-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem 1.75rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-dark) var(--bg2);
+  }
+
+  /* Empty state */
+  .cart-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    gap: 0.75rem;
+  }
+
+  .empty-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .empty-sub {
+    font-size: 0.85rem;
+    color: var(--text2);
+    line-height: 1.6;
+    max-width: 240px;
+  }
+
+  /* Cart items */
+  .cart-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  /* Footer */
+  .cart-footer {
+    padding: 1.5rem 1.75rem;
+    border-top: 1px solid var(--glass-border);
+    background: rgba(8,8,8,0.8);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .cart-total-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .total-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--text2);
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .total-amount {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .cart-secure-note {
+    font-size: 0.65rem;
+    color: var(--text3);
+    text-align: center;
+    letter-spacing: 0.05em;
+    font-family: 'Outfit', sans-serif;
+  }
+</style>
+
+<!-- Cart item styles (global for JS-rendered items) -->
+<style is:global>
+  .cart-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    transition: border-color 0.3s;
+    gap: 0.75rem;
+  }
+
+  .cart-item:hover {
+    border-color: rgba(var(--accent-rgb), 0.3);
+  }
+
+  .cart-item-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .cart-item-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cart-item-qty {
+    font-size: 0.7rem;
+    color: var(--text2);
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 0.05em;
+  }
+
+  .cart-item-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .cart-item-price {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .cart-item-remove {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.2);
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: all 0.3s;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .cart-item-remove:hover {
+    background: rgba(239,68,68,0.2);
+    border-color: rgba(239,68,68,0.5);
+  }
+</style>
+
+<script is:inline>
+  (function() {
+    function closeCart() {
+      var drawer = document.getElementById('cart-drawer');
+      var overlay = document.getElementById('cart-overlay');
+      if (drawer) drawer.classList.remove('open');
+      if (overlay) overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    var closeBtn = document.getElementById('cart-close-btn');
+    var overlay = document.getElementById('cart-overlay');
+    var continueBtn = document.getElementById('cart-continue-btn');
+    var continueBtn2 = document.getElementById('cart-continue-btn-2');
+
+    if (closeBtn) closeBtn.addEventListener('click', closeCart);
+    if (overlay) overlay.addEventListener('click', closeCart);
+    if (continueBtn) continueBtn.addEventListener('click', closeCart);
+    if (continueBtn2) continueBtn2.addEventListener('click', closeCart);
+
+    // ESC key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeCart();
+    });
+  })();
+</script>
