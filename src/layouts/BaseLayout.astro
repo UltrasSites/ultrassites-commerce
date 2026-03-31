@@ -28,7 +28,7 @@ const alternateLinks = Object.keys(languages).map((l) => ({
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="theme-color" content="#030303" />
+    <meta name="theme-color" content="#0d0a1e" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href={canonicalURL} />
     <title>{title}</title>
@@ -65,16 +65,16 @@ const alternateLinks = Object.keys(languages).map((l) => ({
          Inspired by Mast-renov design system
       ══════════════════════════════════════ */
       :root {
-        --bg: #030303;
-        --bg2: #080808;
-        --bg3: #111111;
-        --accent: #c9a84c;
-        --accent-rgb: 201, 168, 76;
-        --accent-dark: #8a6d25;
-        --text: #f9f9f9;
-        --text2: #9e9ea3;
-        --text3: #6e6e76;
-        --glass-bg: rgba(20, 20, 20, 0.4);
+        --bg: #0d0a1e; /* Deep purple luxury */
+        --bg2: #130f28;
+        --bg3: #1a1535;
+        --accent: #e8b84b; /* Warm gold */
+        --accent-rgb: 232, 184, 75;
+        --accent-dark: #b88c28;
+        --text: #f5f3ff;
+        --text2: #9e9ab8;
+        --text3: #6e6a8a;
+        --glass-bg: rgba(13, 10, 30, 0.55);
         --glass-border: rgba(255, 255, 255, 0.08);
         --glass-shine: rgba(255, 255, 255, 0.15);
         --glass-blur: blur(24px);
@@ -103,6 +103,32 @@ const alternateLinks = Object.keys(languages).map((l) => ({
 
       img { display: block; max-width: 100%; }
       a { text-decoration: none; color: inherit; }
+
+      /* ══════════ BREATHING GRADIENT BACKGROUND ══════════ */
+      @keyframes bgBreathe {
+        0%   { opacity: 0.55; transform: scale(1) translate(0, 0); }
+        50%  { opacity: 0.75; transform: scale(1.08) translate(-2%, 2%); }
+        100% { opacity: 0.55; transform: scale(1) translate(0, 0); }
+      }
+
+      @keyframes bgBreathe2 {
+        0%   { opacity: 0.35; transform: scale(1) translate(0, 0); }
+        50%  { opacity: 0.5;  transform: scale(1.12) translate(3%, -2%); }
+        100% { opacity: 0.35; transform: scale(1) translate(0, 0); }
+      }
+
+      body::after {
+        content: '';
+        position: fixed;
+        inset: -20%;
+        z-index: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(ellipse 60% 50% at 20% 30%, rgba(90, 50, 180, 0.28) 0%, transparent 70%),
+          radial-gradient(ellipse 55% 45% at 80% 70%, rgba(140, 60, 200, 0.22) 0%, transparent 65%),
+          radial-gradient(ellipse 40% 60% at 50% 50%, rgba(60, 30, 100, 0.18) 0%, transparent 80%);
+        animation: bgBreathe 8s ease-in-out infinite alternate;
+      }
 
       /* Noise texture overlay */
       body::before {

@@ -363,11 +363,27 @@ const t = (translations as Record<string, Record<string, string>>)[langKey] || {
     var overlay = document.getElementById('cart-overlay');
     var continueBtn = document.getElementById('cart-continue-btn');
     var continueBtn2 = document.getElementById('cart-continue-btn-2');
+    var drawer = document.getElementById('cart-drawer');
 
     if (closeBtn) closeBtn.addEventListener('click', closeCart);
     if (overlay) overlay.addEventListener('click', closeCart);
     if (continueBtn) continueBtn.addEventListener('click', closeCart);
     if (continueBtn2) continueBtn2.addEventListener('click', closeCart);
+
+    // Swipe-down to close cart drawer (mobile)
+    var cartTouchStartY = 0;
+    var cartTouchStartX = 0;
+    if (drawer) {
+      drawer.addEventListener('touchstart', function(e) {
+        cartTouchStartY = e.touches[0].clientY;
+        cartTouchStartX = e.touches[0].clientX;
+      }, { passive: true });
+      drawer.addEventListener('touchend', function(e) {
+        var dy = e.changedTouches[0].clientY - cartTouchStartY;
+        var dx = Math.abs(e.changedTouches[0].clientX - cartTouchStartX);
+        if (dy > 60 && dx < 80) closeCart();
+      }, { passive: true });
+    }
 
     // ESC key
     document.addEventListener('keydown', function(e) {
