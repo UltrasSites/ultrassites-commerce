@@ -115,6 +115,35 @@ const pathWithoutLang = pathSegments.slice(1).join('/') || '';
       <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
     </svg>
   </button>
+
+  <div class="lg-sep"></div>
+
+  <!-- Theme Picker -->
+  <div class="dock-theme-wrap" id="dock-theme-wrap">
+    <button type="button" class="dock-btn d-theme" id="theme-dock-btn" aria-label="Changer de thème">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20V2z" fill="currentColor" stroke="none" opacity="0.3"/><circle cx="12" cy="12" r="3" fill="currentColor"/>
+      </svg>
+    </button>
+    <div id="theme-picker" class="theme-picker hidden" role="menu">
+      <button class="theme-swatch" data-theme-name="violet" aria-label="Violet">
+        <span class="swatch-dot" style="background:linear-gradient(135deg,#12073a,#e8b84b)"></span>
+        <span class="swatch-label">VIOLET</span>
+      </button>
+      <button class="theme-swatch" data-theme-name="midnight" aria-label="Midnight">
+        <span class="swatch-dot" style="background:linear-gradient(135deg,#040d1a,#7eb8f7)"></span>
+        <span class="swatch-label">MIDNIGHT</span>
+      </button>
+      <button class="theme-swatch" data-theme-name="ember" aria-label="Ember">
+        <span class="swatch-dot" style="background:linear-gradient(135deg,#1a0a05,#e8784b)"></span>
+        <span class="swatch-label">EMBER</span>
+      </button>
+      <button class="theme-swatch" data-theme-name="rose" aria-label="Rose Gold">
+        <span class="swatch-dot" style="background:linear-gradient(135deg,#1a0812,#e8a4c0)"></span>
+        <span class="swatch-label">ROSE</span>
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════ MOBILE MENU PANEL ═══════════ -->
@@ -406,6 +435,70 @@ const pathWithoutLang = pathSegments.slice(1).join('/') || '';
     background: var(--glass-border);
   }
 
+  /* Dock theme picker */
+  .dock-theme-wrap { position: relative; }
+
+  .d-theme {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border) !important;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    color: var(--accent);
+  }
+
+  .theme-picker {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    right: -20px;
+    background: var(--bg2);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    box-shadow: 0 -16px 40px rgba(0,0,0,0.6);
+    z-index: 700;
+    min-width: 150px;
+  }
+
+  .theme-picker.hidden { display: none; }
+
+  .theme-swatch {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.25s;
+    width: 100%;
+    text-align: left;
+  }
+
+  .theme-swatch:hover, .theme-swatch.active {
+    background: rgba(255,255,255,0.06);
+    border-color: var(--accent);
+  }
+
+  .swatch-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .swatch-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--text2);
+  }
+
   /* Mobile lang dropdown */
   .dock-lang-wrap { position: relative; }
 
@@ -634,5 +727,56 @@ const pathWithoutLang = pathSegments.slice(1).join('/') || '';
         if (typeof updateCartDrawer === 'function') updateCartDrawer();
       });
     });
+
+    // Theme Picker
+    var themes = {
+      violet:   { bg: '#12073a', bg2: '#1c0e52', bg3: '#261566', accent: '#e8b84b', accentRgb: '232,184,75', accentDark: '#b88c28', text: '#f0ecff', text2: '#a89dd4', text3: '#7a6fa8', glassBg: 'rgba(18,7,58,0.6)' },
+      midnight: { bg: '#040d1a', bg2: '#081828', bg3: '#0d2438', accent: '#7eb8f7', accentRgb: '126,184,247', accentDark: '#4a8fc7', text: '#e8f0fc', text2: '#7098c8', text3: '#4a6888', glassBg: 'rgba(4,13,26,0.62)' },
+      ember:    { bg: '#1a0a05', bg2: '#261208', bg3: '#32180b', accent: '#e8784b', accentRgb: '232,120,75', accentDark: '#b84f28', text: '#fdf0eb', text2: '#c89078', text3: '#986050', glassBg: 'rgba(26,10,5,0.62)' },
+      rose:     { bg: '#1a0812', bg2: '#26101c', bg3: '#331828', accent: '#e8a4c0', accentRgb: '232,164,192', accentDark: '#b87098', text: '#fdedf4', text2: '#c888a8', text3: '#986078', glassBg: 'rgba(26,8,18,0.62)' }
+    };
+
+    var themeDockBtn = document.getElementById('theme-dock-btn');
+    var themePicker = document.getElementById('theme-picker');
+    var themeSwatches = document.querySelectorAll('.theme-swatch');
+
+    function applyTheme(name) {
+      var t = themes[name];
+      if (!t) return;
+      var r = document.documentElement.style;
+      r.setProperty('--bg', t.bg);
+      r.setProperty('--bg2', t.bg2);
+      r.setProperty('--bg3', t.bg3);
+      r.setProperty('--accent', t.accent);
+      r.setProperty('--accent-rgb', t.accentRgb);
+      r.setProperty('--accent-dark', t.accentDark);
+      r.setProperty('--text', t.text);
+      r.setProperty('--text2', t.text2);
+      r.setProperty('--text3', t.text3);
+      r.setProperty('--glass-bg', t.glassBg);
+      localStorage.setItem('theme-luxora', name);
+      themeSwatches.forEach(function(s) {
+        s.classList.toggle('active', s.getAttribute('data-theme-name') === name);
+      });
+    }
+
+    if (themeDockBtn && themePicker) {
+      themeDockBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        themePicker.classList.toggle('hidden');
+      });
+      document.addEventListener('click', function() { themePicker.classList.add('hidden'); });
+      themePicker.addEventListener('click', function(e) { e.stopPropagation(); });
+    }
+
+    themeSwatches.forEach(function(swatch) {
+      swatch.addEventListener('click', function() {
+        applyTheme(swatch.getAttribute('data-theme-name'));
+        themePicker.classList.add('hidden');
+      });
+    });
+
+    var savedTheme = localStorage.getItem('theme-luxora') || 'violet';
+    applyTheme(savedTheme);
   })();
 </script>
