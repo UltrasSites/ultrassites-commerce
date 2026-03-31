@@ -370,18 +370,20 @@ const t = (translations as Record<string, Record<string, string>>)[langKey] || {
     if (continueBtn) continueBtn.addEventListener('click', closeCart);
     if (continueBtn2) continueBtn2.addEventListener('click', closeCart);
 
-    // Swipe-down to close cart drawer (mobile)
-    var cartTouchStartY = 0;
+    // Swipe right to close cart drawer (on header — non-scrollable zone)
+    var cartHeader = document.querySelector('.cart-header');
     var cartTouchStartX = 0;
-    if (drawer) {
-      drawer.addEventListener('touchstart', function(e) {
-        cartTouchStartY = e.touches[0].clientY;
+    var cartTouchStartY = 0;
+    var swipeTarget = cartHeader || drawer;
+    if (swipeTarget) {
+      swipeTarget.addEventListener('touchstart', function(e) {
         cartTouchStartX = e.touches[0].clientX;
+        cartTouchStartY = e.touches[0].clientY;
       }, { passive: true });
-      drawer.addEventListener('touchend', function(e) {
-        var dy = e.changedTouches[0].clientY - cartTouchStartY;
-        var dx = Math.abs(e.changedTouches[0].clientX - cartTouchStartX);
-        if (dy > 60 && dx < 80) closeCart();
+      swipeTarget.addEventListener('touchend', function(e) {
+        var dx = e.changedTouches[0].clientX - cartTouchStartX;
+        var dy = Math.abs(e.changedTouches[0].clientY - cartTouchStartY);
+        if (dx > 70 && dy < 60) closeCart();
       }, { passive: true });
     }
 

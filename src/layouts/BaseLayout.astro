@@ -355,13 +355,14 @@ const alternateLinks = Object.keys(languages).map((l) => ({
       (function() {
         window.luxoraCart = JSON.parse(localStorage.getItem('luxora-cart') || '[]');
 
-        window.addToCart = function(slug, name, price, toastText) {
+        window.addToCart = function(slug, name, price, toastText, qty) {
+          qty = Math.max(1, parseInt(qty) || 1);
           var cart = window.luxoraCart;
           var existing = cart.find(function(i) { return i.slug === slug; });
           if (existing) {
-            existing.qty++;
+            existing.qty += qty;
           } else {
-            cart.push({ slug: slug, name: name, price: price, qty: 1 });
+            cart.push({ slug: slug, name: name, price: price, qty: qty });
           }
           localStorage.setItem('luxora-cart', JSON.stringify(cart));
           window.luxoraCart = cart;

@@ -121,7 +121,24 @@ const categories = [
          HERO SECTION
     ═══════════════════════════════════════ -->
     <section id="hero">
-      <!-- Animated background -->
+      <!-- Veo product video background -->
+      <div class="hero-video-wrap" aria-hidden="true">
+        <video
+          class="hero-video"
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="none"
+          poster=""
+        >
+          <source src="/videos/watch.webm" type="video/webm" />
+          <source src="/videos/watch.mp4" type="video/mp4" />
+        </video>
+        <div class="hero-video-overlay"></div>
+      </div>
+
+      <!-- Animated background (orbs on top of video) -->
       <div class="hero-bg" aria-hidden="true">
         <div class="hero-orb hero-orb-1"></div>
         <div class="hero-orb hero-orb-2"></div>
@@ -451,11 +468,46 @@ const categories = [
     text-align: center;
   }
 
-  /* Animated background */
-  .hero-bg {
+  /* Veo video background */
+  .hero-video-wrap {
     position: absolute;
     inset: 0;
     z-index: 0;
+    overflow: hidden;
+  }
+
+  .hero-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+  }
+
+  .hero-video.loaded { opacity: 1; }
+
+  .hero-video-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(var(--bg, 18,7,58), 0.75) 0%,
+      rgba(var(--bg, 18,7,58), 0.55) 50%,
+      rgba(var(--bg, 18,7,58), 0.85) 100%
+    );
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.7) 0%,
+      rgba(0,0,0,0.45) 50%,
+      rgba(0,0,0,0.75) 100%
+    );
+  }
+
+  /* Animated background (orbs) */
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
   }
 
   .hero-orb {
@@ -1102,6 +1154,19 @@ const categories = [
 </style>
 
 <script is:inline>
+  // Hero video fade-in after play starts
+  (function() {
+    var vid = document.querySelector('.hero-video');
+    if (!vid) return;
+    vid.addEventListener('canplay', function() { vid.classList.add('loaded'); }, { once: true });
+    // Lazy load: start loading after page interactive
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(function() { vid.load(); });
+    } else {
+      setTimeout(function() { vid.load(); }, 500);
+    }
+  })();
+
   // Fade-up intersection observer
   (function() {
     var obs = new IntersectionObserver(function(entries) {

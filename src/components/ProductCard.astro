@@ -86,9 +86,22 @@ const discountPct = originalPrice ? Math.round((1 - price / originalPrice) * 100
     <!-- Quantity selector + Add to cart -->
     <div class="card-qty-row">
       <div class="qty-ctrl">
-        <button type="button" class="qty-btn qty-minus" aria-label="Diminuer la quantité">−</button>
-        <span class="qty-display">1</span>
-        <button type="button" class="qty-btn qty-plus" aria-label="Augmenter la quantité">+</button>
+        <button type="button" class="qty-btn qty-minus" aria-label="Diminuer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/></svg>
+        </button>
+        <input
+          type="number"
+          class="qty-input"
+          value="1"
+          min="1"
+          max="99"
+          aria-label="Quantité"
+          inputmode="numeric"
+          pattern="[0-9]*"
+        />
+        <button type="button" class="qty-btn qty-plus" aria-label="Augmenter">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
       </div>
       <button
         type="button"
@@ -98,45 +111,67 @@ const discountPct = originalPrice ? Math.round((1 - price / originalPrice) * 100
         data-price={price}
         data-lang={langKey}
       >
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:6px;flex-shrink:0">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0">
           <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272"/>
         </svg>
-        {t.product_add}
+        <span class="add-label">{t.product_add}</span>
       </button>
     </div>
-    <script>
+    <script is:inline>
       (function() {
-        var cards = document.querySelectorAll('.product-card');
-        cards.forEach(function(card) {
+        function initCard(card) {
+          if (card._qtyInit) return;
+          card._qtyInit = true;
           var minusBtn = card.querySelector('.qty-minus');
           var plusBtn = card.querySelector('.qty-plus');
-          var display = card.querySelector('.qty-display');
+          var input = card.querySelector('.qty-input');
           var addBtn = card.querySelector('.card-add-btn');
-          if (!minusBtn || !plusBtn || !display || !addBtn) return;
-          var qty = 1;
+          if (!minusBtn || !plusBtn || !input || !addBtn) return;
+
+          function getQty() { return Math.max(1, parseInt(input.value) || 1); }
+
           minusBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            if (qty > 1) { qty--; display.textContent = qty; }
+            e.preventDefault(); e.stopPropagation();
+            var q = getQty();
+            if (q > 1) { input.value = q - 1; input.dispatchEvent(new Event('change')); }
           });
           plusBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            qty++;
-            display.textContent = qty;
+            e.preventDefault(); e.stopPropagation();
+            input.value = getQty() + 1;
+            input.dispatchEvent(new Event('change'));
           });
-          addBtn.addEventListener('click', function() {
+          input.addEventListener('change', function() {
+            var q = parseInt(input.value) || 1;
+            if (q < 1) input.value = 1;
+            if (q > 99) input.value = 99;
+          });
+          input.addEventListener('click', function(e) { e.stopPropagation(); input.select(); });
+
+          addBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var qty = getQty();
             var slug = addBtn.dataset.slug;
             var name = addBtn.dataset.name;
             var price = parseFloat(addBtn.dataset.price);
-            var toastText = name + ' (' + qty + ') ajouté au panier';
+            var toastText = name + (qty > 1 ? ' \u00d7' + qty : '') + ' ajout\u00e9 au panier';
             if (typeof window.addToCart === 'function') {
-              for (var i = 0; i < qty; i++) {
-                window.addToCart(slug, name, price, i === qty - 1 ? toastText : null);
-              }
+              window.addToCart(slug, name, price, toastText, qty);
             }
-            qty = 1;
-            display.textContent = 1;
+            input.value = 1;
+            addBtn.classList.add('added');
+            setTimeout(function() { addBtn.classList.remove('added'); }, 900);
           });
-        });
+        }
+
+        function initAll() {
+          document.querySelectorAll('.product-card').forEach(initCard);
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initAll);
+        } else {
+          initAll();
+        }
       })();
     </script>
   </div>
@@ -358,59 +393,83 @@ const discountPct = originalPrice ? Math.round((1 - price / originalPrice) * 100
   .card-qty-row {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.6rem;
   }
 
   .qty-ctrl {
     display: flex;
     align-items: center;
-    gap: 0;
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-radius: 999px;
     overflow: hidden;
     flex-shrink: 0;
-    height: 48px;
+    height: 46px;
+    transition: border-color 0.3s;
+  }
+
+  .qty-ctrl:focus-within {
+    border-color: rgba(var(--accent-rgb), 0.5);
   }
 
   .qty-btn {
-    width: 40px;
-    height: 48px;
+    width: 44px;
+    height: 46px;
     background: transparent;
     border: none;
-    color: var(--text2);
-    font-size: 1.2rem;
+    color: var(--text3);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: color 0.2s, background 0.2s;
-    font-family: 'Outfit', sans-serif;
-    line-height: 1;
-    min-width: 40px;
-    min-height: 48px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
   }
 
-  .qty-btn:hover {
+  .qty-btn:active {
     color: var(--accent);
-    background: rgba(var(--accent-rgb), 0.1);
+    background: rgba(var(--accent-rgb), 0.12);
   }
 
-  .qty-display {
-    min-width: 28px;
+  .qty-btn:hover { color: var(--accent); }
+
+  .qty-input {
+    width: 32px;
+    background: transparent;
+    border: none;
     text-align: center;
     font-family: 'Outfit', sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--text);
-    user-select: none;
+    outline: none;
+    -moz-appearance: textfield;
+    padding: 0;
+    touch-action: manipulation;
   }
+
+  .qty-input::-webkit-outer-spin-button,
+  .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; }
 
   .card-add-btn {
     flex: 1;
     justify-content: center;
-    padding: 0.9rem 1rem;
-    font-size: 0.6rem;
-    min-height: 48px;
+    gap: 0.4rem;
+    padding: 0.85rem 0.75rem;
+    font-size: 0.55rem;
+    min-height: 46px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.4s var(--transition-spring), background 0.25s;
   }
+
+  .card-add-btn.added {
+    background: linear-gradient(135deg, #1a6b3c, #0f4526) !important;
+    border-color: #1a6b3c !important;
+    color: #fff !important;
+  }
+
+  .add-label { pointer-events: none; }
 </style>
