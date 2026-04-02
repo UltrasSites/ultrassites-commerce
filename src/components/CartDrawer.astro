@@ -89,11 +89,12 @@ const t = (translations as Record<string, Record<string, string>>)[langKey] || {
     position: fixed;
     inset: 0;
     z-index: 1000;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.4s;
+    transition: opacity 0.4s ease;
   }
 
   .cart-overlay.open {
@@ -370,20 +371,41 @@ const t = (translations as Record<string, Record<string, string>>)[langKey] || {
     if (continueBtn) continueBtn.addEventListener('click', closeCart);
     if (continueBtn2) continueBtn2.addEventListener('click', closeCart);
 
-    // Swipe right to close cart drawer (on header — non-scrollable zone)
-    var cartHeader = document.querySelector('.cart-header');
+    // Swipe right to close cart drawer — real-time feedback
     var cartTouchStartX = 0;
     var cartTouchStartY = 0;
-    var swipeTarget = cartHeader || drawer;
-    if (swipeTarget) {
-      swipeTarget.addEventListener('touchstart', function(e) {
+    var cartSwipeT0 = 0;
+
+    if (drawer) {
+      drawer.addEventListener('touchstart', function(e) {
         cartTouchStartX = e.touches[0].clientX;
         cartTouchStartY = e.touches[0].clientY;
+        cartSwipeT0 = Date.now();
+        drawer.style.transition = 'none';
       }, { passive: true });
-      swipeTarget.addEventListener('touchend', function(e) {
+
+      drawer.addEventListener('touchmove', function(e) {
+        var dx = e.touches[0].clientX - cartTouchStartX;
+        var dy = Math.abs(e.touches[0].clientY - cartTouchStartY);
+        if (dx > 0 && dy < 60) {
+          drawer.style.transform = 'translateX(' + dx + 'px)';
+          var progress = Math.min(dx / 200, 1);
+          if (overlay) overlay.style.opacity = String(1 - progress);
+        }
+      }, { passive: true });
+
+      drawer.addEventListener('touchend', function(e) {
         var dx = e.changedTouches[0].clientX - cartTouchStartX;
         var dy = Math.abs(e.changedTouches[0].clientY - cartTouchStartY);
-        if (dx > 70 && dy < 60) closeCart();
+        var velocity = dx / (Date.now() - cartSwipeT0);
+        drawer.style.transition = '';
+        if (dy < 60 && (velocity > 0.45 || dx > 80)) {
+          if (navigator.vibrate) navigator.vibrate(20);
+          closeCart();
+        } else {
+          drawer.style.transform = '';
+          if (overlay) overlay.style.opacity = '';
+        }
       }, { passive: true });
     }
 

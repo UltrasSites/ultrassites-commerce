@@ -162,7 +162,7 @@ const categories = [
 
         <!-- CTAs -->
         <div class="hero-actions">
-          <a href={`/${langKey}/#featured`} class="liquid-btn primary hero-cta">
+          <a href={`/${langKey}/#featured`} class="liquid-btn primary hero-cta pulse-cta" id="hero-main-cta">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:8px;flex-shrink:0">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
             </svg>
@@ -452,6 +452,16 @@ const categories = [
     </footer>
 
   </main>
+
+  <!-- Mobile sticky CTA bar -->
+  <div class="mobile-sticky-cta" id="mobile-sticky-cta">
+    <a href={`/${langKey}/#featured`} class="liquid-btn primary mobile-sticky-btn pulse-cta">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:8px;flex-shrink:0">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
+      </svg>
+      {t.hero_cta}
+    </a>
+  </div>
 </BaseLayout>
 
 <style>
@@ -622,6 +632,30 @@ const categories = [
   }
 
   .hero-cta { padding: 1.2rem 3rem; font-size: 0.65rem; }
+
+  /* Pulse/glow CTA animation */
+  @keyframes pulseCTA {
+    0%, 100% {
+      box-shadow:
+        inset 0 1px 1px rgba(255,255,255,0.3),
+        0 10px 30px rgba(var(--accent-rgb), 0.3),
+        0 0 0 0 rgba(var(--accent-rgb), 0.4);
+    }
+    50% {
+      box-shadow:
+        inset 0 1px 1px rgba(255,255,255,0.3),
+        0 16px 48px rgba(var(--accent-rgb), 0.55),
+        0 0 0 8px rgba(var(--accent-rgb), 0);
+    }
+  }
+
+  .pulse-cta {
+    animation: pulseCTA 2.5s ease-in-out infinite;
+  }
+
+  .pulse-cta:hover {
+    animation: none;
+  }
 
   /* Trust badges */
   .hero-trust {
@@ -1151,6 +1185,38 @@ const categories = [
     .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
     .footer-bottom { flex-direction: column; text-align: center; }
   }
+
+  /* ══════════ MOBILE STICKY CTA ══════════ */
+  .mobile-sticky-cta {
+    display: none;
+    position: fixed;
+    bottom: calc(100px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 500;
+    padding: 0 1rem;
+    width: min(360px, 90vw);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .mobile-sticky-cta.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .mobile-sticky-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 1rem 2rem;
+    font-size: 0.7rem;
+    box-shadow: 0 8px 32px rgba(var(--accent-rgb), 0.5);
+  }
+
+  @media (max-width: 1023px) {
+    .mobile-sticky-cta { display: block; }
+  }
 </style>
 
 <script is:inline>
@@ -1189,4 +1255,23 @@ const categories = [
     }
     if (input) input.value = '';
   }
+
+  // Mobile sticky CTA — show when hero CTA is not visible
+  (function() {
+    var stickyCta = document.getElementById('mobile-sticky-cta');
+    var heroCta = document.getElementById('hero-main-cta');
+    if (!stickyCta || !heroCta) return;
+
+    var ctaObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          stickyCta.classList.remove('visible');
+        } else {
+          stickyCta.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.5 });
+
+    ctaObserver.observe(heroCta);
+  })();
 </script>

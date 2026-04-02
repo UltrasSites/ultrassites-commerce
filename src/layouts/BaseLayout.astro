@@ -57,6 +57,32 @@ const alternateLinks = Object.keys(languages).map((l) => ({
       rel="stylesheet"
     />
 
+    <!-- Theme restore (prevent flash) -->
+    <script is:inline>
+      (function() {
+        var saved = localStorage.getItem('veloro-theme') || localStorage.getItem('theme-luxora') || 'violet';
+        var themes = {
+          violet:   { bg: '#12073a', bg2: '#1c0e52', bg3: '#261566', accent: '#e8b84b', accentRgb: '232,184,75', accentDark: '#b88c28', text: '#f0ecff', text2: '#a89dd4', text3: '#7a6fa8', glassBg: 'rgba(18,7,58,0.6)' },
+          midnight: { bg: '#040d1a', bg2: '#081828', bg3: '#0d2438', accent: '#7eb8f7', accentRgb: '126,184,247', accentDark: '#4a8fc7', text: '#e8f0fc', text2: '#7098c8', text3: '#4a6888', glassBg: 'rgba(4,13,26,0.62)' },
+          ember:    { bg: '#1a0a05', bg2: '#261208', bg3: '#32180b', accent: '#e8784b', accentRgb: '232,120,75', accentDark: '#b84f28', text: '#fdf0eb', text2: '#c89078', text3: '#986050', glassBg: 'rgba(26,10,5,0.62)' },
+          rose:     { bg: '#1a0812', bg2: '#26101c', bg3: '#331828', accent: '#e8a4c0', accentRgb: '232,164,192', accentDark: '#b87098', text: '#fdedf4', text2: '#c888a8', text3: '#986078', glassBg: 'rgba(26,8,18,0.62)' }
+        };
+        var t = themes[saved] || themes['violet'];
+        var r = document.documentElement.style;
+        r.setProperty('--bg', t.bg);
+        r.setProperty('--bg2', t.bg2);
+        r.setProperty('--bg3', t.bg3);
+        r.setProperty('--accent', t.accent);
+        r.setProperty('--accent-rgb', t.accentRgb);
+        r.setProperty('--accent-dark', t.accentDark);
+        r.setProperty('--text', t.text);
+        r.setProperty('--text2', t.text2);
+        r.setProperty('--text3', t.text3);
+        r.setProperty('--glass-bg', t.glassBg);
+        document.documentElement.setAttribute('data-theme', saved);
+      })();
+    </script>
+
     <slot name="head" />
 
     <style is:global>
