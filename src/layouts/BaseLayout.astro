@@ -390,19 +390,34 @@ const alternateLinks = Object.keys(languages).map((l) => ({
           } else {
             cart.push({ slug: slug, name: name, price: price, qty: qty });
           }
-          localStorage.setItem('luxora-cart', JSON.stringify(cart));
-          window.luxoraCart = cart;
-          updateCartBadge();
+          saveCart(cart);
           showToast((toastText || name + ' ajouté au panier'));
-          updateCartDrawer();
+        };
+
+        window.updateCartQty = function(slug, delta) {
+          var cart = window.luxoraCart;
+          var item = cart.find(function(i) { return i.slug === slug; });
+          if (item) {
+            item.qty += delta;
+            if (item.qty <= 0) {
+              removeFromCart(slug);
+            } else {
+              saveCart(cart);
+            }
+          }
         };
 
         window.removeFromCart = function(slug) {
           window.luxoraCart = window.luxoraCart.filter(function(i) { return i.slug !== slug; });
-          localStorage.setItem('luxora-cart', JSON.stringify(window.luxoraCart));
+          saveCart(window.luxoraCart);
+        };
+
+        function saveCart(cart) {
+          localStorage.setItem('luxora-cart', JSON.stringify(cart));
+          window.luxoraCart = cart;
           updateCartBadge();
           updateCartDrawer();
-        };
+        }
 
         window.updateCartBadge = function() {
           var cart = window.luxoraCart;
@@ -440,11 +455,15 @@ const alternateLinks = Object.keys(languages).map((l) => ({
             return '<div class="cart-item" data-slug="' + item.slug + '">' +
               '<div class="cart-item-info">' +
                 '<span class="cart-item-name">' + item.name + '</span>' +
-                '<span class="cart-item-qty">x' + item.qty + '</span>' +
+                '<div class="cart-qty-wrap">' +
+                  '<button class="qty-btn" onclick="updateCartQty(\'' + item.slug + '\', -1)" aria-label="Moins">−</button>' +
+                  '<span class="qty-val">' + item.qty + '</span>' +
+                  '<button class="qty-btn" onclick="updateCartQty(\'' + item.slug + '\', 1)" aria-label="Plus">+</button>' +
+                '</div>' +
               '</div>' +
               '<div class="cart-item-right">' +
                 '<span class="cart-item-price">' + (item.price * item.qty).toFixed(2).replace('.', ',') + ' €</span>' +
-                '<button class="cart-item-remove" onclick="removeFromCart(\'' + item.slug + '\')">×</button>' +
+                '<button class="cart-item-remove" onclick="removeFromCart(\'' + item.slug + '\')" aria-label="Supprimer">×</button>' +
               '</div>' +
             '</div>';
           }).join('');

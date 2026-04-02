@@ -305,11 +305,41 @@ const t = (translations as Record<string, Record<string, string>>)[langKey] || {
     text-overflow: ellipsis;
   }
 
-  .cart-item-qty {
-    font-size: 0.7rem;
+  .cart-qty-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+  }
+
+  .qty-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
     color: var(--text2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+
+  .qty-btn:hover {
+    background: rgba(var(--accent-rgb), 0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .qty-val {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 1.2rem;
+    text-align: center;
     font-family: 'Outfit', sans-serif;
-    letter-spacing: 0.05em;
   }
 
   .cart-item-right {
@@ -355,8 +385,14 @@ const t = (translations as Record<string, Record<string, string>>)[langKey] || {
     function closeCart() {
       var drawer = document.getElementById('cart-drawer');
       var overlay = document.getElementById('cart-overlay');
-      if (drawer) drawer.classList.remove('open');
-      if (overlay) overlay.classList.remove('open');
+      if (drawer) {
+        drawer.classList.remove('open');
+        drawer.style.transform = '';
+      }
+      if (overlay) {
+        overlay.classList.remove('open');
+        overlay.style.opacity = '';
+      }
       document.body.style.overflow = '';
     }
 
@@ -372,22 +408,35 @@ const t = (translations as Record<string, Record<string, string>>)[langKey] || {
     if (continueBtn2) continueBtn2.addEventListener('click', closeCart);
 
     // Swipe right to close cart drawer — real-time feedback
-    var cartTouchStartX = 0;
-    var cartTouchStartY = 0;
-    var cartSwipeT0 = 0;
+    var startX = 0;
+    var startY = 0;
+    var currentX = 0;
+    var isSwiping = false;
+    var startTime = 0;
 
     if (drawer) {
       drawer.addEventListener('touchstart', function(e) {
-        cartTouchStartX = e.touches[0].clientX;
-        cartTouchStartY = e.touches[0].clientY;
-        cartSwipeT0 = Date.now();
+        if (e.touches.length > 1) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        startTime = Date.now();
+        isSwiping = false;
         drawer.style.transition = 'none';
       }, { passive: true });
 
       drawer.addEventListener('touchmove', function(e) {
-        var dx = e.touches[0].clientX - cartTouchStartX;
-        var dy = Math.abs(e.touches[0].clientY - cartTouchStartY);
-        if (dx > 0 && dy < 60) {
+        if (e.touches.length > 1) return;
+        currentX = e.touches[0].clientX;
+        var dx = currentX - startX;
+        var dy = Math.abs(e.touches[0].clientY - startY);
+
+        // Detect horizontal swipe intent
+        if (!isSwiping && dx > 10 && dy < 30) {
+          isSwiping = true;
+        }
+
+        if (isSwiping && dx > 0) {
+          // Prevent horizontal scroll if needed, but here we just move the drawer
           drawer.style.transform = 'translateX(' + dx + 'px)';
           var progress = Math.min(dx / 200, 1);
           if (overlay) overlay.style.opacity = String(1 - progress);
@@ -395,17 +444,30 @@ const t = (translations as Record<string, Record<string, string>>)[langKey] || {
       }, { passive: true });
 
       drawer.addEventListener('touchend', function(e) {
-        var dx = e.changedTouches[0].clientX - cartTouchStartX;
-        var dy = Math.abs(e.changedTouches[0].clientY - cartTouchStartY);
-        var velocity = dx / (Date.now() - cartSwipeT0);
+        if (!isSwiping) {
+          drawer.style.transition = '';
+          return;
+        }
+        var dx = currentX - startX;
+        var duration = Date.now() - startTime;
+        var velocity = dx / duration;
+
         drawer.style.transition = '';
-        if (dy < 60 && (velocity > 0.45 || dx > 80)) {
-          if (navigator.vibrate) navigator.vibrate(20);
+        if (dx > 100 || (velocity > 0.4 && dx > 30)) {
+          if (navigator.vibrate) navigator.vibrate(10);
           closeCart();
         } else {
           drawer.style.transform = '';
           if (overlay) overlay.style.opacity = '';
         }
+        isSwiping = false;
+      }, { passive: true });
+
+      drawer.addEventListener('touchcancel', function() {
+        drawer.style.transition = '';
+        drawer.style.transform = '';
+        if (overlay) overlay.style.opacity = '';
+        isSwiping = false;
       }, { passive: true });
     }
 
