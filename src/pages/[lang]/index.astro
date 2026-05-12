@@ -17,7 +17,7 @@ const t = (translations as Record<string, Record<string, string>>)[langKey] || {
 const featuredProducts = [
   {
     slug: 'montre-carbon-x',
-    name: 'Montre Carbon X',
+    name: t.prod1_name,
     price: 289,
     badge: t.product_new,
     gradient: 'linear-gradient(135deg, #0a0a0a 0%, #1a1510 50%, #0a0a0a 100%)',
@@ -25,7 +25,7 @@ const featuredProducts = [
   },
   {
     slug: 'sac-luxora-elite',
-    name: 'Sac Luxora Elite',
+    name: t.prod2_name,
     price: 189,
     badge: t.product_bestseller,
     gradient: 'linear-gradient(135deg, #100a08 0%, #1e1210 50%, #100a08 100%)',
@@ -33,7 +33,7 @@ const featuredProducts = [
   },
   {
     slug: 'parfum-nuit-doree',
-    name: 'Parfum Nuit Dorée',
+    name: t.prod3_name,
     price: 129,
     originalPrice: 169,
     badge: t.product_sale,
@@ -42,7 +42,7 @@ const featuredProducts = [
   },
   {
     slug: 'ceinture-signature',
-    name: 'Ceinture Signature',
+    name: t.prod4_name,
     price: 89,
     badge: t.product_new,
     gradient: 'linear-gradient(135deg, #080810 0%, #12121e 50%, #080810 100%)',
@@ -53,7 +53,7 @@ const featuredProducts = [
 const newArrivals = [
   {
     slug: 'bracelet-or-noir',
-    name: 'Bracelet Or Noir',
+    name: t.prod5_name,
     price: 159,
     badge: t.product_new,
     gradient: 'linear-gradient(135deg, #0a0a0a 0%, #1a1510 50%, #0a0a0a 100%)',
@@ -61,7 +61,7 @@ const newArrivals = [
   },
   {
     slug: 'lunettes-prestige',
-    name: 'Lunettes Prestige',
+    name: t.prod6_name,
     price: 219,
     badge: t.product_new,
     gradient: 'linear-gradient(135deg, #08080a 0%, #101018 50%, #08080a 100%)',
@@ -69,7 +69,7 @@ const newArrivals = [
   },
   {
     slug: 'foulard-soie-luxe',
-    name: 'Foulard Soie Luxe',
+    name: t.prod7_name,
     price: 99,
     originalPrice: 129,
     badge: t.product_sale,
@@ -78,7 +78,7 @@ const newArrivals = [
   },
   {
     slug: 'portefeuille-carbon',
-    name: 'Portefeuille Carbon',
+    name: t.prod8_name,
     price: 149,
     badge: t.product_bestseller,
     gradient: 'linear-gradient(135deg, #0a0a0a 0%, #1a1510 50%, #0a0a0a 100%)',
@@ -92,21 +92,21 @@ const categories = [
     label: t.cat_watches,
     gradient: 'linear-gradient(135deg, #0a0a0a 0%, #1a1510 40%, #c9a84c1a 100%)',
     icon: '⌚',
-    count: '24 articles',
+    count: `24 ${t.count_articles}`,
   },
   {
     id: 'fashion',
     label: t.cat_fashion,
     gradient: 'linear-gradient(135deg, #0a0608 0%, #180810 40%, #c9a84c1a 100%)',
     icon: '👜',
-    count: '38 articles',
+    count: `38 ${t.count_articles}`,
   },
   {
     id: 'perfume',
     label: t.cat_perfume,
     gradient: 'linear-gradient(135deg, #080a08 0%, #101808 40%, #c9a84c1a 100%)',
     icon: '✨',
-    count: '18 articles',
+    count: `18 ${t.count_articles}`,
   },
 ];
 ---
@@ -428,7 +428,7 @@ const categories = [
 
           <!-- Languages -->
           <div class="footer-links-col">
-            <h3 class="footer-col-title">Langues</h3>
+            <h3 class="footer-col-title">{t.footer_languages}</h3>
             {Object.entries(languages).map(([key, label]) => (
               <a
                 href={`/${key}/`}
@@ -443,9 +443,9 @@ const categories = [
         <div class="footer-bottom">
           <p class="footer-rights">{t.footer_rights}</p>
           <div class="footer-badges">
-            <span class="footer-badge">SSL Sécurisé</span>
-            <span class="footer-badge">RGPD Compliant</span>
-            <span class="footer-badge">Demo Officielle · Ultras-Sites</span>
+            <span class="footer-badge">{t.footer_badge_ssl}</span>
+            <span class="footer-badge">{t.footer_badge_gdpr}</span>
+            <span class="footer-badge">{t.footer_badge_demo}</span>
           </div>
         </div>
       </div>

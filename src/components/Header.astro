@@ -204,7 +204,7 @@ const pathWithoutLang = pathSegments.slice(1).join('/') || '';
 
   <!-- Language grid in menu panel -->
   <div class="mp-lang-section">
-    <div class="mp-section-label">Langue</div>
+    <div class="mp-section-label">{t.header_lang}</div>
     <div class="mp-lang-grid">
       {Object.entries(languages).map(([key, label]) => (
         <a
@@ -220,7 +220,7 @@ const pathWithoutLang = pathSegments.slice(1).join('/') || '';
 
   <!-- Theme switcher in menu panel -->
   <div class="mp-theme-section">
-    <div class="mp-section-label">Thème</div>
+    <div class="mp-section-label">{t.header_theme}</div>
     <div class="mp-theme-dots">
       <button class="mp-theme-dot" data-theme-name="violet" aria-label="Violet" style="background:linear-gradient(135deg,#12073a,#e8b84b)"></button>
       <button class="mp-theme-dot" data-theme-name="midnight" aria-label="Midnight" style="background:linear-gradient(135deg,#040d1a,#7eb8f7)"></button>
