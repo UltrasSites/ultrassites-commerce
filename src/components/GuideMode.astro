@@ -1,0 +1,179 @@
+---
+// GuideMode v2 — visite guidée pédagogique (§7.bis A), pattern driver.js/intro.js.
+// Une seule bulle active à la fois, TOUJOURS au premier plan (overlay top-layer fixe),
+// spotlight sur la cible + scroll auto + nav ← / → / Échap / clic + compteur n/N.
+// Source des étapes : les composants <GuideTip> (data-guide-tip) — désormais simples
+// porteurs de texte (les anciennes pastilles inline sont neutralisées dans GuideTip.astro).
+// À RETIRER de la version livrée au client payant.
+---
+<button id="guide-toggle" type="button" aria-pressed="false" aria-label="Activer le mode guide explicatif">
+  <span class="gt-eye">👁</span>
+  <span class="gt-label"><span class="gt-on">Masquer le guide</span><span class="gt-off">Mode guide</span></span>
+</button>
+
+<style>
+  #guide-toggle {
+    position: fixed; right: 14px; bottom: calc(86px + env(safe-area-inset-bottom)); z-index: 10050;
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 800; letter-spacing: 0.02em; color: #1a1205;
+    background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-soft) 100%);
+    border: 1px solid color-mix(in srgb, #fff 50%, var(--color-gold));
+    box-shadow: 0 8px 24px rgba(0,0,0,0.45); cursor: pointer; transition: transform .15s ease;
+  }
+  @media (min-width: 768px) { #guide-toggle { bottom: 22px; right: 22px; } }
+  #guide-toggle:hover { transform: translateY(-2px); }
+  #guide-toggle:active { transform: scale(0.96); }
+  .gt-eye { font-size: 15px; }
+  .gt-on { display: none; }
+  body.guide-on #guide-toggle .gt-on { display: inline; }
+  body.guide-on #guide-toggle .gt-off { display: none; }
+  body.guide-on #guide-toggle { background: var(--color-surface); color: var(--color-gold-soft); border-color: var(--color-gold); }
+
+  /* ===== Overlay top-layer (créé en JS) ===== */
+  :global(.gtour-spot) {
+    position: fixed; z-index: 10000; pointer-events: none; border-radius: 14px;
+    border: 2px solid var(--color-gold);
+    box-shadow: 0 0 0 9999px rgba(6,10,20,0.74), 0 0 22px 4px color-mix(in srgb, var(--color-gold) 45%, transparent);
+    transition: top .25s ease, left .25s ease, width .25s ease, height .25s ease, opacity .2s ease; opacity: 0;
+  }
+  :global(.gtour-spot.show) { opacity: 1; }
+  :global(.gtour-catch) { position: fixed; inset: 0; z-index: 10010; cursor: pointer; background: transparent; }
+
+  :global(.gtour-pop) {
+    position: fixed; z-index: 10020; width: min(90vw, 340px);
+    background: rgba(13,20,38,0.98); border: 1px solid color-mix(in srgb, var(--color-gold) 55%, var(--color-border));
+    border-radius: 16px; padding: 0.95rem 1rem 0.85rem; color: var(--color-text);
+    box-shadow: 0 18px 46px rgba(0,0,0,0.6); opacity: 0; transform: translateY(8px);
+    transition: opacity .22s ease, transform .22s ease, top .25s ease, left .25s ease;
+  }
+  :global(.gtour-pop.show) { opacity: 1; transform: translateY(0); }
+  :global(.gtour-pop .gt-tag) { display: inline-block; font-size: 0.58rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.14em; color: var(--color-gold-soft); margin-bottom: 5px; }
+  :global(.gtour-pop .gt-text) { font-size: 0.83rem; line-height: 1.55; }
+  :global(.gtour-pop .gt-foot) { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.85rem; border-top: 1px solid var(--color-border); padding-top: 0.7rem; }
+  :global(.gtour-pop .gt-count) { font-size: 0.72rem; color: var(--color-text-muted); font-weight: 700; }
+  :global(.gtour-pop .gt-nav) { margin-left: auto; display: flex; gap: 0.4rem; }
+  :global(.gtour-pop .gt-btn) { border: 1px solid color-mix(in srgb, var(--color-gold) 40%, var(--color-border)); background: color-mix(in srgb, var(--color-gold) 12%, transparent); color: var(--color-text); border-radius: 999px; padding: 0.4rem 0.8rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: background .15s; }
+  :global(.gtour-pop .gt-btn:hover) { background: color-mix(in srgb, var(--color-gold) 26%, transparent); }
+  :global(.gtour-pop .gt-btn-primary) { background: linear-gradient(135deg, var(--color-gold), var(--color-gold-soft)); color: #1a1205; border-color: transparent; }
+  :global(.gtour-pop .gt-btn:disabled) { opacity: 0.35; cursor: default; }
+  :global(.gtour-pop .gt-close) { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.08); border: none; cursor: pointer; color: var(--color-text); font-size: 0.9rem; line-height: 1; }
+  :global(.gtour-pop .gt-close:hover) { background: color-mix(in srgb, var(--color-gold) 26%, transparent); color: var(--color-gold-soft); }
+
+  @media (prefers-reduced-motion: reduce) { #guide-toggle, :global(.gtour-spot), :global(.gtour-pop) { transition: opacity .15s ease; } }
+</style>
+
+<script>
+  (function () {
+    const toggle = document.getElementById('guide-toggle');
+    if (!toggle) return;
+
+    const L = { prev: '← Précédent', next: 'Suivant →', finish: 'Terminer ✓', close: 'Fermer', deftag: 'Pourquoi ça marche', count: (i, n) => i + ' / ' + n };
+    const KEY = 'commerce-guide-on';
+
+    let steps = [], idx = 0, raf = 0;
+    let spot, pop, catcher, elText, elTag, elCount, btnPrev, btnNext;
+
+    function isShown(el) { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; }
+    function collectSteps() {
+      let nodes = Array.from(document.querySelectorAll('[data-guide]:not([data-guide-dock])'));
+      let mode = 'attr';
+      if (!nodes.length) { nodes = Array.from(document.querySelectorAll('[data-guide-tip]')); mode = 'tip'; }
+      steps = nodes.map((el) => {
+        if (mode === 'attr') {
+          return { target: el, tag: el.getAttribute('data-guide-tag') || L.deftag, html: false, text: el.getAttribute('data-guide') || '' };
+        }
+        const sec = el.closest('section, header, footer, [data-guide-target]') || el.parentElement || el;
+        const title = (el.querySelector('.guide-pop-title')?.textContent || '').replace('💡', '').trim();
+        const body = el.querySelector('.guide-pop-body')?.innerHTML || '';
+        return { target: sec, tag: title || L.deftag, html: true, text: body };
+      });
+      // Étape DOCK toujours en dernier (mobile-only → filtrée sur desktop car cachée).
+      const dock = document.querySelector('[data-guide-dock]');
+      if (dock) steps.push({ target: dock, tag: dock.getAttribute('data-guide-tag') || L.deftag, html: false, text: dock.getAttribute('data-guide') || '' });
+      // Ne garder que les cibles réellement visibles (cible cachée = skip propre).
+      steps = steps.filter((s) => s.target && isShown(s.target));
+    }
+
+    function buildOverlay() {
+      spot = document.createElement('div'); spot.className = 'gtour-spot';
+      catcher = document.createElement('div'); catcher.className = 'gtour-catch';
+      pop = document.createElement('div'); pop.className = 'gtour-pop'; pop.setAttribute('role', 'dialog');
+      pop.innerHTML =
+        '<button type="button" class="gt-close" aria-label="' + L.close + '">&times;</button>' +
+        '<span class="gt-tag"></span><div class="gt-text"></div>' +
+        '<div class="gt-foot"><span class="gt-count"></span><span class="gt-nav">' +
+        '<button type="button" class="gt-btn gt-prev"></button>' +
+        '<button type="button" class="gt-btn gt-btn-primary gt-next"></button></span></div>';
+      document.body.appendChild(spot); document.body.appendChild(catcher); document.body.appendChild(pop);
+      elTag = pop.querySelector('.gt-tag'); elText = pop.querySelector('.gt-text'); elCount = pop.querySelector('.gt-count');
+      btnPrev = pop.querySelector('.gt-prev'); btnNext = pop.querySelector('.gt-next'); btnPrev.textContent = L.prev;
+      pop.querySelector('.gt-close').addEventListener('click', () => setState(false));
+      btnPrev.addEventListener('click', () => go(idx - 1));
+      btnNext.addEventListener('click', () => { if (idx >= steps.length - 1) setState(false); else go(idx + 1); });
+      catcher.addEventListener('click', () => { if (idx >= steps.length - 1) setState(false); else go(idx + 1); });
+    }
+
+    function reposition() {
+      const s = steps[idx]; if (!s) return;
+      const r = s.target.getBoundingClientRect();
+      const vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight, pad = 8;
+      spot.style.top = Math.max(6, r.top - pad) + 'px';
+      spot.style.left = Math.max(6, r.left - pad) + 'px';
+      spot.style.width = Math.min(vw - 12, r.width + pad * 2) + 'px';
+      spot.style.height = Math.min(vh - 12, r.height + pad * 2) + 'px';
+      const pw = pop.offsetWidth || 320, ph = pop.offsetHeight || 160;
+      let pLeft = r.left + r.width / 2 - pw / 2;
+      pLeft = Math.max(10, Math.min(pLeft, vw - pw - 10));
+      let pTop;
+      if (r.bottom + 14 + ph < vh) pTop = r.bottom + 14;
+      else if (r.top - 14 - ph > 0) pTop = r.top - 14 - ph;
+      else pTop = Math.max(10, (vh - ph) / 2);
+      pop.style.left = pLeft + 'px'; pop.style.top = pTop + 'px';
+    }
+    function schedule() { if (raf) cancelAnimationFrame(raf); raf = requestAnimationFrame(reposition); }
+
+    function go(i) {
+      if (i < 0) i = 0; if (i > steps.length - 1) i = steps.length - 1; idx = i;
+      const s = steps[idx];
+      elTag.textContent = s.tag;
+      if (s.html) elText.innerHTML = s.text; else elText.textContent = s.text;
+      elCount.textContent = L.count(idx + 1, steps.length);
+      btnPrev.disabled = idx === 0;
+      btnNext.textContent = idx >= steps.length - 1 ? L.finish : L.next;
+      try { s.target.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { s.target.scrollIntoView(); }
+      setTimeout(() => { reposition(); spot.classList.add('show'); pop.classList.add('show'); }, 280);
+    }
+
+    function setState(on) {
+      document.body.classList.toggle('guide-on', on);
+      toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+      try { sessionStorage.setItem(KEY, on ? '1' : '0'); } catch (e) {}
+      if (on) {
+        if (!spot) buildOverlay();
+        collectSteps(); if (!steps.length) return;
+        spot.style.display = catcher.style.display = pop.style.display = '';
+        go(0);
+        window.addEventListener('scroll', schedule, { passive: true });
+        window.addEventListener('resize', schedule, { passive: true });
+        document.addEventListener('keydown', onKey);
+      } else {
+        if (spot) { spot.classList.remove('show'); pop.classList.remove('show'); }
+        window.removeEventListener('scroll', schedule);
+        window.removeEventListener('resize', schedule);
+        document.removeEventListener('keydown', onKey);
+        if (spot) setTimeout(() => { if (!document.body.classList.contains('guide-on')) { spot.style.display = catcher.style.display = pop.style.display = 'none'; } }, 220);
+      }
+    }
+
+    function onKey(e) {
+      if (e.key === 'Escape') setState(false);
+      else if (e.key === 'ArrowRight') { if (idx < steps.length - 1) go(idx + 1); }
+      else if (e.key === 'ArrowLeft') { if (idx > 0) go(idx - 1); }
+    }
+
+    toggle.addEventListener('click', () => setState(!document.body.classList.contains('guide-on')));
+    let initial = false;
+    try { initial = sessionStorage.getItem(KEY) === '1'; } catch (e) {}
+    if (initial) setState(true);
+  })();
+</script>

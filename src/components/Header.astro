@@ -104,7 +104,10 @@ const pathWithoutLang = pathSegments.slice(1).join('/') || '';
 </header>
 
 <!-- ═══════════ MOBILE DOCK ═══════════ -->
-<div class="lg-dock liquid-glass" id="mobile-dock">
+<div class="lg-dock liquid-glass" id="mobile-dock"
+  data-guide-dock
+  data-guide-tag="Tout sous le pouce"
+  data-guide="Sur mobile, cette barre du bas reste fixe sous le pouce : accueil, langue, panier, menu, thème. Ton client achète en quelques gestes, d'une main, sans jamais chercher — c'est ce confort qui fait passer la commande.">
   <!-- Accueil -->
   <a href={`/${langKey}/`} class="dock-btn d-home" aria-label="Accueil">
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">

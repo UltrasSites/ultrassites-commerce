@@ -3,6 +3,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import ProductCard from '../../components/ProductCard.astro';
 import CartDrawer from '../../components/CartDrawer.astro';
+import DemoExplain from '../../components/DemoExplain.astro';
+import GuideMode from '../../components/GuideMode.astro';
 import { translations, languages } from '../../i18n/translations';
 
 export function getStaticPaths() {
@@ -120,7 +122,9 @@ const categories = [
     <!-- ═══════════════════════════════════════
          HERO SECTION
     ═══════════════════════════════════════ -->
-    <section id="hero">
+    <section id="hero"
+      data-guide-tag="Le hero : on capte en 3 secondes"
+      data-guide="La première image vend l'univers de ta boutique + une seule action illuminée (« Découvrir »). Le visiteur comprend tout de suite ce que tu vends et où cliquer — pas de surcharge, juste l'envie d'entrer.">
       <!-- Veo product video background -->
       <div class="hero-video-wrap" aria-hidden="true">
         <video
@@ -199,10 +203,26 @@ const categories = [
       </div>
     </section>
 
+    <DemoExplain
+      badge={langKey === 'fr' ? 'Démo Ultras-Sites — Boutique e-commerce' : 'Ultras-Sites Demo — E-commerce'}
+      title={langKey === 'fr' ? 'Votre boutique en ligne qui encaisse pendant que vous dormez' : 'Your online store sells while you sleep'}
+      subtitle={langKey === 'fr' ? 'Démo 100% fonctionnelle. Personnalisée avec vos produits, votre marque, vos paiements — livrée en moins de 7 jours.' : 'Personalised in less than 7 days.'}
+      features={[
+        { icon: '🛒', title: langKey === 'fr' ? 'Panier + checkout fluide' : 'Smooth cart + checkout', text: langKey === 'fr' ? 'Drawer animé, paiement Mollie/Paddle en 30 sec.' : 'Animated drawer, Mollie/Paddle in 30s.' },
+        { icon: '🌍', title: langKey === 'fr' ? '7 langues prêtes' : '7 languages ready', text: langKey === 'fr' ? 'FR/EN/ES/PT/DE/IT/NL pour vendre en Europe sans plugin.' : 'EU-wide sales without plugins.' },
+        { icon: '📦', title: langKey === 'fr' ? 'Stock & catalogue facile' : 'Easy stock & catalog', text: langKey === 'fr' ? 'Ajoutez un produit en 2 min via simple JSON ou Sanity.' : 'Add a product in 2 min.' },
+        { icon: '⚡', title: langKey === 'fr' ? 'Mobile parfait' : 'Mobile-perfect', text: langKey === 'fr' ? 'Lighthouse 95+/100, conversion 2× mobile vs desktop.' : 'Lighthouse 95+/100.' },
+      ]}
+      cta={langKey === 'fr' ? 'Recevoir cette démo pour ma boutique' : 'Get this demo for my store'}
+      note={langKey === 'fr' ? '800€ tout compris · maquette en 24h · livraison 7 jours' : '800€ all-in · preview in 24h · 7 days'}
+    />
+
     <!-- ═══════════════════════════════════════
          FEATURED PRODUCTS
     ═══════════════════════════════════════ -->
-    <section id="featured" class="section-pad">
+    <section id="featured" class="section-pad"
+      data-guide-tag="Tes produits phares, en vitrine"
+      data-guide="Les best-sellers d'abord : belle photo, prix clair, ajout au panier en 1 tap. La bascule « Cartes / Liste » laisse le client parcourir à sa façon. Mettre en avant ce qui se vend le mieux augmente le panier moyen.">
       <div class="container">
         <div class="section-header centered fade-up">
           <div class="eyebrow">{t.featured_title}</div>
@@ -210,7 +230,12 @@ const categories = [
           <p class="section-subtitle">{t.featured_subtitle}</p>
         </div>
 
-        <div class="products-grid">
+        <div class="pview-toggle" role="group" aria-label="Affichage produits">
+          <button class="pview-btn is-active" data-pv="cards" type="button" aria-label="Vue cartes">▦ {langKey === 'fr' ? 'Cartes' : langKey === 'es' ? 'Tarjetas' : langKey === 'pt' ? 'Cartões' : 'Cards'}</button>
+          <button class="pview-btn" data-pv="list" type="button" aria-label="Vue liste">≡ {langKey === 'fr' ? 'Liste' : langKey === 'es' ? 'Lista' : langKey === 'pt' ? 'Lista' : 'List'}</button>
+        </div>
+
+        <div class="products-grid view-cards" id="products-grid">
           {featuredProducts.map((product, i) => (
             <div style={`transition-delay: ${i * 0.1}s`}>
               <ProductCard
@@ -453,7 +478,7 @@ const categories = [
 
   </main>
 
-
+  <GuideMode />
 </BaseLayout>
 
 <style>
@@ -570,6 +595,18 @@ const categories = [
   @keyframes orbFloat3 {
     0%, 100% { transform: translate(0, 0); }
     50% { transform: translate(40px, -30px); }
+  }
+
+  /* Low-CPU/RAM/reduced-motion: figer les orbes (gros blur 80px = GPU killer) */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-orb-1, .hero-orb-2, .hero-orb-3 { animation: none !important; }
+  }
+  /* Mobile: reduire le rayon de blur (80px = trop lourd sur GPU mobile) */
+  @media (max-width: 768px) {
+    .hero-orb { filter: blur(40px); }
+    .hero-orb-1 { width: 400px; height: 400px; }
+    .hero-orb-2 { width: 320px; height: 320px; }
+    .hero-orb-3 { width: 260px; height: 260px; animation: none; }
   }
 
   /* Hero content */
@@ -736,6 +773,30 @@ const categories = [
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
+  }
+  /* Bascule Cartes / Liste (premium) */
+  .pview-toggle {
+    display: inline-flex; margin: 0 auto 1.5rem; gap: 3px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 999px; padding: 3px;
+  }
+  .pview-btn {
+    border: none; background: transparent; color: rgba(255,255,255,0.6);
+    border-radius: 999px; padding: 0.45rem 1rem; font-size: 0.8rem; font-weight: 700;
+    cursor: pointer; transition: background 0.2s, color 0.2s; white-space: nowrap;
+  }
+  .pview-btn.is-active { background: rgba(201,168,76,0.22); color: var(--gold, #c9a84c); }
+  /* Vue LISTE : chaque produit en ligne horizontale */
+  .products-grid.view-list { display: flex; flex-direction: column; gap: 0.9rem; max-width: 820px; margin: 0 auto; }
+  .products-grid.view-list > div { transition-delay: 0s !important; }
+  .products-grid.view-list .product-card {
+    display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 1.2rem;
+    padding: 0.6rem 0.9rem; border-radius: 1rem;
+  }
+  .products-grid.view-list .card-image-wrap { width: 110px; height: 110px; }
+  @media (max-width: 640px) {
+    .products-grid.view-list .product-card { grid-template-columns: 84px 1fr; gap: 0.9rem; }
+    .products-grid.view-list .card-image-wrap { width: 84px; height: 84px; }
   }
 
   /* ══════════ CATEGORIES ══════════ */
@@ -1265,5 +1326,20 @@ const categories = [
     }, { threshold: 0.5 });
 
     ctaObserver.observe(heroCta);
+  })();
+
+  // Bascule Cartes / Liste (premium)
+  (function () {
+    var grid = document.getElementById('products-grid');
+    if (!grid) return;
+    document.querySelectorAll('.pview-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.pview-btn').forEach(function (b) { b.classList.remove('is-active'); });
+        btn.classList.add('is-active');
+        var v = btn.getAttribute('data-pv');
+        grid.classList.toggle('view-cards', v === 'cards');
+        grid.classList.toggle('view-list', v === 'list');
+      });
+    });
   })();
 </script>
